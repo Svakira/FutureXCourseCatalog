@@ -1,55 +1,67 @@
 package com.futurex.services.FutureXCourseCatalog;
 
-import com.netflix.appinfo.InstanceInfo;
-import com.netflix.discovery.EurekaClient;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
+
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 
 @RestController
 public class CatalogController {
 
     @Autowired
-    private EurekaClient client;
+    private DiscoveryClient discoveryClient;
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    @GetMapping("/catalog")
+    @CircuitBreaker(name = "courseService", fallbackMethod = "fallbackGetCatalog")
+    public String getCatalog() {
+        List<ServiceInstance> instances = discoveryClient.getInstances("fx-course-service");
+        if (instances.isEmpty()) {
+            throw new RuntimeException("No instances of fx-course-service available");
+        }
+        ServiceInstance instance = instances.get(0);
+        String url = instance.getUri().toString();
+        System.out.println("URL: " + url);
+        
+        String course = restTemplate.getForObject(url + "/course", String.class);
+        return course;
+    }
 
     @RequestMapping("/")
-    public String getCatalogHome() {
-        String courseAppMesage = "";
-        //String courseAppURL = "http://localhost:8080/";
-        RestTemplate restTemplate = new RestTemplate();
-        InstanceInfo instanceInfo = client.getNextServerFromEureka("fx-course-service",false);
-        String courseAppURL = instanceInfo.getHomePageUrl();
-        courseAppMesage = restTemplate.getForObject(courseAppURL,String.class);
-
-        return("Welcome to FutureX Course Catalog "+courseAppMesage);
+    public String home() {
+        return "This is the Course Catalog Service running on port: 8765";
     }
 
-    @RequestMapping("/catalog")
-    public String getCatalog() {
-        String courses = "";
-        //String courseAppURL = "http://localhost:8080/courses";
-        InstanceInfo instanceInfo = client.getNextServerFromEureka("fx-course-service",false);
-        String courseAppURL = instanceInfo.getHomePageUrl();
-        courseAppURL = courseAppURL+"/courses";
-        RestTemplate restTemplate = new RestTemplate();
-        courses = restTemplate.getForObject(courseAppURL,String.class);
-
-        return("Our courses are "+courses);
+    @GetMapping("/first-course")  
+    @CircuitBreaker(name = "courseService", fallbackMethod = "fallbackGetFirstCourse")
+    public String getFirstCourse() {
+        List<ServiceInstance> instances = discoveryClient.getInstances("fx-course-service");
+        if (instances.isEmpty()) {
+            throw new RuntimeException("No instances of fx-course-service available");
+        }
+        ServiceInstance instance = instances.get(0);
+        String url = instance.getUri().toString();
+        System.out.println("URL: " + url);
+        
+        String course = restTemplate.getForObject(url + "/course-first", String.class);
+        return course;
     }
 
-    @RequestMapping("/firstcourse")
-    public String getSpecificCourse() {
-        Course course = new Course();
-        //String courseAppURL = "http://localhost:8080/1";
-        InstanceInfo instanceInfo = client.getNextServerFromEureka("fx-course-service",false);
-        String courseAppURL = instanceInfo.getHomePageUrl();
-        courseAppURL = courseAppURL+"/1";
-        RestTemplate restTemplate = new RestTemplate();
-
-        course = restTemplate.getForObject(courseAppURL,Course.class);
-
-        return("Our first course is "+course.getCoursename());
+    // Fallback methods
+    public String fallbackGetCatalog(Exception ex) {
+        return "El servicio de catálogo no está disponible temporalmente. Por favor, inténtelo más tarde.";
     }
 
+    public String fallbackGetFirstCourse(Exception ex) {
+        return "El servicio de cursos no está disponible temporalmente. Por favor, inténtelo más tarde.";
+    }
 }
