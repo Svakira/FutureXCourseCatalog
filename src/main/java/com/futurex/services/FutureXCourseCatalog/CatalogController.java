@@ -22,12 +22,10 @@ public class CatalogController {
     @RequestMapping("/")
     @CircuitBreaker(name = "courseService", fallbackMethod = "fallbackGetCatalogHome")
     public String getCatalogHome() {
-        String courseAppMesage = "";
         InstanceInfo instanceInfo = client.getNextServerFromEureka("fx-course-service", false);
         String courseAppURL = instanceInfo.getHomePageUrl();
-        System.out.println("URL" + courseAppURL);
-        courseAppMesage = restTemplate.getForObject(courseAppURL, String.class);
-        return("Welcome to FutureX Course Catalog "+courseAppMesage);
+        String courseAppMesage = restTemplate.getForObject(courseAppURL, String.class);
+        return "Welcome to FutureX Course Catalog " + courseAppMesage;
     }
 
     public String fallbackGetCatalogHome(Exception ex) {
@@ -37,12 +35,10 @@ public class CatalogController {
     @RequestMapping("/catalog")
     @CircuitBreaker(name = "courseService", fallbackMethod = "fallbackGetCatalog")
     public String getCatalog() {
-        String courses = "";
         InstanceInfo instanceInfo = client.getNextServerFromEureka("fx-course-service", false);
         String courseAppURL = instanceInfo.getHomePageUrl();
-        System.out.println("URL" + courseAppURL);
-        courses = restTemplate.getForObject(courseAppURL + "courses", String.class);
-        return("Our courses are "+courses);
+        String courses = restTemplate.getForObject(courseAppURL + "courses", String.class);
+        return "Our courses are " + courses;
     }
 
     public String fallbackGetCatalog(Exception ex) {
@@ -52,12 +48,10 @@ public class CatalogController {
     @RequestMapping("/firstcourse")
     @CircuitBreaker(name = "courseService", fallbackMethod = "fallbackGetSpecificCourse")
     public String getSpecificCourse() {
-        Course course = new Course();
         InstanceInfo instanceInfo = client.getNextServerFromEureka("fx-course-service", false);
         String courseAppURL = instanceInfo.getHomePageUrl();
-        System.out.println("URL" + courseAppURL);
-        course = restTemplate.getForObject(courseAppURL + "1", Course.class);
-        return("Our first course is "+course.getCoursename());
+        Course course = restTemplate.getForObject(courseAppURL + "1", Course.class);
+        return "Our first course is " + (course != null ? course.getCoursename() : "Unknown");
     }
 
     public String fallbackGetSpecificCourse(Exception ex) {
