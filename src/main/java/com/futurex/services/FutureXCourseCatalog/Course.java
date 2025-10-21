@@ -1,23 +1,15 @@
 package com.futurex.services.FutureXCourseCatalog;
 
-import java.math.BigInteger;
-
 public class Course {
-
-    private BigInteger courseid;
     private String coursename;
-    private String author;
+    private String coursedesc;
 
     public Course() {
     }
 
-    public BigInteger getCourseid() {
-
-        return courseid;
-    }
-
-    public void setCourseid(BigInteger courseid) {
-        this.courseid = courseid;
+    public Course(String coursename, String coursedesc) {
+        this.coursename = coursename;
+        this.coursedesc = coursedesc;
     }
 
     public String getCoursename() {
@@ -28,15 +20,11 @@ public class Course {
         this.coursename = coursename;
     }
 
-    public String getAuthor() {
-        return author;
+    public String getCoursedesc() {
+        return coursedesc;
     }
 
-    public void setAuthor(String author) {
-        this.author = author;
+    public void setCoursedesc(String coursedesc) {
+        this.coursedesc = coursedesc;
     }
-
-
-
-
 }
